@@ -1,0 +1,144 @@
+=====================================================================
+ NEOATHLON PLAYWRIGHT - COMMAND CHEAT SHEET (Git Bash)
+=====================================================================
+Project folder (the one that has pytest.ini):
+  /d/Neoathlon/neoathlon-playwright/neoathlon-playwright
+
+
+---------------------------------------------------------------------
+ 1. EVERY TIME YOU START WORK
+---------------------------------------------------------------------
+# Go to the project folder
+cd /d/Neoathlon/neoathlon-playwright/neoathlon-playwright
+
+# Activate the virtual environment  -> you should see (.venv) in the prompt
+source .venv/Scripts/activate
+
+# (Optional) open VS Code in this folder
+code .
+
+
+---------------------------------------------------------------------
+ 2. ONE-TIME SETUP (only for a fresh copy / new laptop)
+---------------------------------------------------------------------
+cd /d/Neoathlon/neoathlon-playwright/neoathlon-playwright
+
+# Create the virtual environment
+python -m venv .venv
+
+# Activate it
+source .venv/Scripts/activate
+
+# Install packages + browser
+pip install -r requirements.txt
+playwright install chromium
+
+# Create your private settings file and fill in REAL values
+cp .env.example .env
+code .env
+#   BASE_URL=https://neoathlon.com
+#   LOGIN_PATH=/auth
+#   TEST_USER_EMAIL=your-real-email
+#   TEST_USER_PASSWORD=your-real-password
+#   DEFAULT_TIMEOUT=15000
+
+# VS Code: Ctrl+Shift+P -> "Python: Select Interpreter" -> pick .venv
+
+
+---------------------------------------------------------------------
+ 3. RECORD A NEW TEST WITH CODEGEN (script is written automatically)
+---------------------------------------------------------------------
+# Format:  ./scripts/record.sh <test_name> <start_path>
+./scripts/record.sh login /auth          # -> tests/recorded/test_login.py
+./scripts/record.sh signup /signup       # -> tests/recorded/test_signup.py
+./scripts/record.sh home /               # -> tests/recorded/test_home.py
+
+# If you get "Permission denied":
+bash scripts/record.sh login /auth
+
+While recording:
+  - Type the SAME email/password that are in .env
+    (they get replaced with credentials["email"] / ["password"] automatically)
+  - To check text: click "Assert text" in the toolbar FIRST (it turns blue),
+    then click the element (e.g. "Dashboard") and press the tick mark
+  - Close the browser when done -> file is saved and cleaned
+  - Same name again = file is OVERWRITTEN, so use a new name per flow
+
+# Save a logged-in session once (optional, makes auth tests faster)
+./scripts/record_login.sh                # log in, close browser -> auth/state.json
+
+# Plain codegen without the helper script (manual, NOT auto-cleaned)
+playwright codegen --target python-pytest -o tests/recorded/test_x.py https://neoathlon.com/auth
+
+
+---------------------------------------------------------------------
+ 4. RUN TESTS
+---------------------------------------------------------------------
+pytest                                           # all tests
+pytest -m smoke                                  # smoke only
+pytest -m regression                             # regression only
+pytest tests/smoke/test_login.py --headed        # one file, see the browser
+pytest tests/recorded/test_login.py --headed     # a recorded test
+pytest -k login                                  # tests with "login" in the name
+pytest --headed --slowmo 500                     # slow motion to watch
+pytest -n 4                                      # run in parallel (4 workers)
+pytest --reruns 2                                # retry flaky tests
+pytest --collect-only -q                         # just list tests, don't run
+
+Do NOT close the browser while a test is running (causes TargetClosedError).
+
+
+---------------------------------------------------------------------
+ 5. REPORTS & DEBUGGING
+---------------------------------------------------------------------
+# Open the HTML report
+start reports/report.html
+
+# Open the trace of a failed test (screenshot + video + steps)
+playwright show-trace test-results/<test-folder>/trace.zip
+
+# Find a good locator on a page interactively
+playwright codegen https://neoathlon.com
+#   -> use "Pick locator" in the toolbar
+
+
+---------------------------------------------------------------------
+ 6. QUICK FIXES
+---------------------------------------------------------------------
+Problem: "BASE_URL is not set"
+  -> .env is missing in the project folder
+     ls -a                 # check .env is listed
+     cp .env.example .env  # then fill in real values
+
+Problem: "collected 0 items"
+  -> file/function name must start with test_
+  -> file was recorded without the pytest target (use record.sh)
+
+Problem: test opens the wrong website
+  -> check: echo $BASE_URL   and   cat .env
+
+Problem: Import "playwright" could not be resolved (yellow line in VS Code)
+  -> Ctrl+Shift+P -> Python: Select Interpreter -> .venv
+
+Problem: "No module named playwright" / pytest not found
+  -> source .venv/Scripts/activate
+     pip install -r requirements.txt
+
+Problem: browser not installed
+  -> playwright install chromium
+
+Update Playwright:
+  pip install -U playwright pytest-playwright
+  playwright install chromium
+
+Leave the virtual environment:
+  deactivate
+
+
+---------------------------------------------------------------------
+ REMEMBER
+---------------------------------------------------------------------
+- .env          = your REAL values, never commit it (git-ignored)
+- .env.example  = template with dummy values, safe to commit
+- Always run commands from the folder that has pytest.ini
+=====================================================================

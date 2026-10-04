@@ -1,0 +1,29 @@
+# --- Secrets / local config ---
+.env
+.env.*
+!.env.example
+
+# --- Saved login sessions (contain cookies/tokens) ---
+auth/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.venv-*/
+venv/
+env/
+
+# --- Pytest / Playwright output ---
+.pytest_cache/
+test-results/
+reports/
+playwright-report/
+*.log
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
